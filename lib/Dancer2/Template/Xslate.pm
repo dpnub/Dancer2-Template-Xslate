@@ -12,7 +12,7 @@ use Dancer2::Core::Types qw(InstanceOf);
 use Text::Xslate;
 use File::Spec::Functions qw(abs2rel file_name_is_absolute);
 
-# VERSION
+our $VERSION = 'v0.2.0'; # VERSION
 # ABSTRACT: Text::Xslate template engine for Dancer2
 
 with 'Dancer2::Core::Role::Template';
@@ -26,18 +26,18 @@ has '+engine' => (
 
 sub _build_engine {
     my ($self) = @_;
+    my $settings = $self->settings || {};
 
-    my %config = %{ $self->config };
+    my $engine_config;
+    $engine_config = $settings->{'engines'}{'template'}{'Xslate'} if( exists($settings->{'engines'}{'template'}{'Xslate'}) );
+    $engine_config ||= {};
 
-    # Dancer2 injects a couple options without asking; Text::Xslate protests:
-    delete $config{environment};
-    if ( my $location = delete $config{location} ) {
-        unless (defined $config{path}) {
-            $config{path} = [$location];
-        }
-    }
+    my %engine_config = %{$engine_config};
 
-    return Text::Xslate->new(%config);
+    my @path = ($self->views);
+    $engine_config{'path'} = \@path;
+
+    return Text::Xslate->new(%engine_config);
 }
 
 sub render {
@@ -50,12 +50,11 @@ sub render {
         }
         else {
             my $rel_path = file_name_is_absolute($tmpl)
-                ? abs2rel($tmpl, $self->config->{location})
+                ? abs2rel($tmpl, $self->views)
                 : $tmpl;
             $xslate->render($rel_path, $vars);
         }
     };
-
     $@ and croak $@;
 
     return $content;

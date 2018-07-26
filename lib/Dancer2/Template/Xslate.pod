@@ -11,7 +11,11 @@ C<config.yaml>:
     template: Xslate
     engines:
       template:
-        Xslate: { path: "views" }
+        Xslate:
+          cache:     1
+          cache_dir: "/var/cache/xstate"
+          syntax:    "Kolon"
+          verbose:   2
 
 A Dancer 2 application:
 
@@ -19,7 +23,7 @@ A Dancer 2 application:
 
     get '/page/:number' => sub {
         my $page_num = params->{number};
-        template "foo.tx", { page_num => $page_num };
+        template "foo", { page_num => $page_num };      # Using template foo.tx
     };
 
 =head1 METHODS
